@@ -1,26 +1,55 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-primary: #0e7a5b;
+  --color-primary-dark: #0a5c45;
+  --color-forest: #0c352a;
+  --color-forest-deep: #092b22;
+  --color-ink: #182220;
+  --color-muted: #5f6e67;
+  --color-faint: #8a968f;
+  --color-line: #e2e8e4;
+  --color-canvas: #f6f8f7;
+  --color-soft: #e7f2ec;
+  --color-soft-deep: #d3e7de;
+  --color-amber: #b45309;
+  --color-amber-soft: #fdf1e3;
+  --color-danger: #d64545;
+  --color-danger-soft: #fbe9e6;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --shadow-card: 0 1px 2px rgb(20 34 30 / 0.04), 0 4px 16px rgb(20 34 30 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(20 34 30 / 0.06), 0 12px 32px rgb(20 34 30 / 0.1);
+
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-dash: dash-move 1.2s linear infinite;
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+  }
+  @keyframes dash-move {
+    to { stroke-dashoffset: -2; }
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-soft-deep) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-dot,
+  .animate-dash {
+    animation: none !important;
+  }
 }

@@ -1,0 +1,64 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth.token.role === 'operator'",
+      "$uid": { ".read": "auth.uid === $uid" }
+    },
+    "buses": {
+      ".read": "auth != null",
+      "$busId": {
+        "meta": { ".write": "auth.token.role === 'operator'" },
+        "telemetry": { ".write": "auth.token.role === 'device' && auth.token.busId === $busId" }
+      }
+    },
+    "routes": { ".read": "auth != null", ".write": "auth.token.role === 'operator'" },
+    "commands": {
+      ".read": "auth.token.role === 'operator'",
+      "$busId": {
+        ".read": "auth.token.busId === $busId",
+        "forceStop":   { ".write": "auth.token.role === 'operator'" },
+        "clearCrash":  { ".write": "auth.token.role === 'operator' || (auth.token.role === 'device' && auth.token.busId === $busId)" },
+        "warning":     { ".write": "auth.token.role === 'operator'" },
+        "warningAck":  { ".write": "auth.token.role === 'driver' && auth.token.busId === $busId" },
+        "drive":       { ".write": "auth.token.role === 'driver' && auth.token.busId === $busId" }
+      }
+    },
+    "events": {
+      "$busId": {
+        ".read": "auth.token.role === 'operator' || auth.token.busId === $busId",
+        ".write": "auth.token.role === 'operator' || (auth.token.role === 'device' && auth.token.busId === $busId)"
+      }
+    },
+    "alerts": {
+      ".read": "auth.token.role === 'operator'",
+      ".write": "auth.token.role === 'operator'"
+    },
+    "seats": {
+      ".read": "auth != null",
+      "$busId": {
+        "$seat": {
+          ".write": "auth.token.role === 'operator' || (auth.token.role === 'passenger' && ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.child('uid').val() === auth.uid && !newData.exists())))",
+          ".validate": "newData.hasChildren(['uid', 'ts'])"
+        }
+      }
+    },
+    "ratings": {
+      ".read": "auth != null",
+      "$busId": {
+        "$rid": {
+          ".write": "auth.token.role === 'passenger' && !data.exists() && newData.child('uid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['uid', 'stars', 'ts']) && newData.child('stars').isNumber() && newData.child('stars').val() >= 1 && newData.child('stars').val() <= 5"
+        }
+      }
+    },
+    "geofences": {
+      "$uid": { ".read": "auth.uid === $uid", ".write": "auth.uid === $uid" }
+    },
+    "settings": {
+      ".read": "auth != null",
+      ".write": "auth.token.role === 'operator'"
+    }
+  }
+}
