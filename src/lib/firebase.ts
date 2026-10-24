@@ -19,5 +19,12 @@ const app = getApps().length
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 
+/** Current user's Firebase ID token (for /api/* calls that need it). */
+export async function authToken(): Promise<string> {
+  const u = auth.currentUser;
+  if (!u) throw new Error("You must be signed in.");
+  return u.getIdToken();
+}
+
 export const login = (email: string, password: string): Promise<UserCredential> =>
   signInWithEmailAndPassword(auth, email, password);

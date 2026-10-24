@@ -1,23 +1,27 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   Bus as BusIcon,
   CheckCircle2,
+  ClipboardList,
+  FileDown,
   Gauge,
+  ImagePlus,
   Map as MapIcon,
   Route as RouteIcon,
   Settings,
   ShieldAlert,
   Siren,
+  Trash2,
   UserPlus,
   Users,
   Wrench,
   X,
 } from "lucide-react";
 import { get, ref, set, remove } from "firebase/database";
-import { db } from "@/lib/firebase";
+import { db, auth, authToken } from "@/lib/firebase";
 import { Gate } from "@/lib/guards";
 import {
   useAlerts,
@@ -25,14 +29,21 @@ import {
   useRoutes,
   useValue,
   useDeviation,
+  useBusEvents,
+  useRatings,
 } from "@/hooks/useRealtime";
 import { useOperatorEngine } from "@/hooks/useOperatorEngine";
 import { useSettings, saveSettingsLocal } from "@/hooks/useSettings";
+import { useArenaMap } from "@/hooks/useArenaMap";
+import { processArenaImage } from "@/lib/imageCrop";
 import { RouteEditor } from "@/components/RouteEditor";
+import { DriverReport } from "@/components/DriverReport";
 import { Workspace, type NavItem } from "@/components/Workspace";
 import { Card, SectionTitle, StatCard } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { LiveMap } from "@/components/LiveMap";
+import { computeDriverStats } from "@/lib/driverStats";
+import { exportDriverPdf } from "@/lib/driverPdf";
 import { cn } from "@/lib/cn";
 import type { Alert, Bus, Route } from "@/lib/types";
 
@@ -40,6 +51,7 @@ const NAV: NavItem[] = [
   { id: "alerts", label: "Alerts", icon: Bell },
   { id: "fleet", label: "Fleet", icon: MapIcon },
   { id: "routes", label: "Routes", icon: RouteIcon },
+  { id: "drivers", label: "Drivers", icon: ClipboardList },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "teams", label: "Teams", icon: Users },
 ];
@@ -64,6 +76,7 @@ function OperatorApp() {
       {tab === "fleet" && <Fleet buses={buses} routes={routes} />}
       {tab === "alerts" && <AlertsView alerts={alerts} buses={buses} />}
       {tab === "routes" && <RouteEditor routes={routes} settings={settings} />}
+      {tab === "drivers" && <DriversView />}
       {tab === "settings" && <SettingsPanel settings={settings} />}
       {tab === "teams" && <Teams />}
     </Workspace>
@@ -73,19 +86,60 @@ function OperatorApp() {
 function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> }) {
   const [mode, setMode] = useState<"arena" | "google">(settings.mapMode === "google" ? "google" : "arena");
   const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const bg = useArenaMap();
 
   async function save(patch: Record<string, unknown>) {
     setBusy(true);
     setErr("");
+    setOk("");
     // apply immediately for this browser (works even if Firebase refuses)
     saveSettingsLocal(patch);
     if (patch.mapMode) setMode(patch.mapMode as "arena" | "google");
     try {
       const snap = await get(ref(db, "settings"));
       await set(ref(db, "settings"), { ...(snap.val() ?? {}), ...patch });
+      setOk("Saved — every connected device switches automatically.");
+    } catch (e) {
+      setErr(
+        e instanceof Error && e.message.includes("permission_denied")
+          ? "Applied for this browser only. Your account is not allowed to change global settings (operator role required)."
+          : "Applied for this browser only. Could not sync to other devices — check your Firebase connection / rules."
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    setBusy(true);
+    setErr("");
+    setOk("");
+    try {
+      const dataUrl = await processArenaImage(file);
+      await set(ref(db, "arenaMap"), dataUrl);
+      setOk("Background saved — every client's arena map updated.");
+    } catch (err) {
+      setErr(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeBg() {
+    setBusy(true);
+    setErr("");
+    setOk("");
+    try {
+      await set(ref(db, "arenaMap"), null);
+      setOk("Background removed — arenas show the default city.");
     } catch {
-      setErr("Applied for this browser. Firebase refused the write (database rules not deployed yet) — other devices will pick it up once rules are deployed.");
+      setErr("Could not remove the background.");
     } finally {
       setBusy(false);
     }
@@ -95,6 +149,9 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
     <div className="flex flex-col gap-4">
       {err && (
         <p className="rounded-xl border border-amber/40 bg-amber-soft px-4 py-3 text-xs font-medium text-amber">{err}</p>
+      )}
+      {ok && (
+        <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-600">{ok}</p>
       )}
       <Card>
         <SectionTitle title="Map mode" hint="Which map the whole app uses." />
@@ -115,6 +172,42 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
           </button>
         </div>
       </Card>
+      <Card>
+        <SectionTitle title="Arena background" hint="A photo shown behind the arena (custom map). Applies to every client." />
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+          {bg ? (
+            <img src={bg} alt="Arena background" className="h-28 w-28 rounded-xl border border-slate-200 object-cover" />
+          ) : (
+            <div className="flex h-28 w-28 items-center justify-center rounded-xl border border-dashed border-slate-300 text-center text-[11px] text-slate-400">
+              No image yet
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+            >
+              <ImagePlus size={14} />
+              {busy ? "Working…" : "Upload image"}
+            </button>
+            {bg && (
+              <button
+                onClick={removeBg}
+                disabled={busy}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                Remove background
+              </button>
+            )}
+            <p className="text-xs text-slate-400">
+              Any photo works — it is cropped to 1:1 and shrunk automatically. Only operators can change it.
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -131,6 +224,58 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
   const avgSpeed = online.length
     ? online.reduce((s, b) => s + (b.telemetry?.speed ?? 0), 0) / online.length
     : 0;
+
+  const [reg, setReg] = useState({ id: "", name: "", plate: "", routeId: "", seats: "40", color: "#0f8a6d" });
+  const [regBusy, setRegBusy] = useState(false);
+  const [regMsg, setRegMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const COLORS = ["#0f8a6d", "#e07b39", "#2f6fb2", "#8a4fb2", "#c2452d", "#5a7d2c"];
+  const fieldCls =
+    "w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-soft";
+
+  const register = async () => {
+    const id = reg.id.trim().toUpperCase().replace(/\s+/g, "-");
+    if (!id || !reg.name.trim() || !reg.routeId) {
+      setRegMsg({ ok: false, text: "Bus ID, name and route are required." });
+      return;
+    }
+    setRegBusy(true);
+    setRegMsg(null);
+    try {
+      await set(ref(db, `buses/${id}/meta`), {
+        name: reg.name.trim(),
+        plate: reg.plate.trim(),
+        routeId: reg.routeId,
+        seats: Number(reg.seats) || 40,
+        color: reg.color,
+      });
+      setRegMsg({ ok: true, text: `Bus ${id} registered.` });
+      setReg({ id: "", name: "", plate: "", routeId: "", seats: "40", color: "#0f8a6d" });
+    } catch (e) {
+      setRegMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setRegBusy(false);
+    }
+  };
+
+  const removeBus = async (busId: string) => {
+    if (!window.confirm(`Remove bus ${busId}? Its telemetry, events and ratings will be deleted.`)) return;
+    setRemoving(busId);
+    setRegMsg(null);
+    try {
+      const res = await fetch("/api/admin/delete-bus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await authToken()}` },
+        body: JSON.stringify({ busId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setRegMsg({ ok: true, text: `Bus ${busId} removed.` });
+    } catch (e) {
+      setRegMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -165,6 +310,48 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
         />
       </div>
 
+      <Card delay={0.1}>
+        <div className="p-4 sm:p-5">
+          <SectionTitle
+            title="Register bus"
+            hint="Adds a bus to the fleet — firmware/simulator can then report against it."
+          />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <input className={fieldCls} placeholder="Bus ID (e.g. BUS-03)" value={reg.id} onChange={(e) => setReg({ ...reg, id: e.target.value })} />
+            <input className={fieldCls} placeholder="Name (e.g. City Express)" value={reg.name} onChange={(e) => setReg({ ...reg, name: e.target.value })} />
+            <input className={fieldCls} placeholder="Plate (optional)" value={reg.plate} onChange={(e) => setReg({ ...reg, plate: e.target.value })} />
+            <select className={fieldCls} value={reg.routeId} onChange={(e) => setReg({ ...reg, routeId: e.target.value })}>
+              <option value="">Choose a route…</option>
+              {routes.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+            <input className={fieldCls} type="number" min="1" placeholder="Seats" value={reg.seats} onChange={(e) => setReg({ ...reg, seats: e.target.value })} />
+            <div className="flex items-center gap-2">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setReg({ ...reg, color: c })}
+                  aria-label={`color ${c}`}
+                  className={`h-7 w-7 rounded-full transition ${reg.color === c ? "ring-2 ring-ink ring-offset-2" : "opacity-60 hover:opacity-100"}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+            <button
+              onClick={register}
+              disabled={regBusy}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 sm:col-span-2 sm:justify-self-start"
+            >
+              {regBusy ? "Registering…" : "Register bus"}
+            </button>
+          </div>
+          {regMsg && (
+            <p className={`mt-3 text-xs font-medium ${regMsg.ok ? "text-emerald-600" : "text-red-600"}`}>{regMsg.text}</p>
+          )}
+        </div>
+      </Card>
+
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card delay={0.1}>
           <div className="p-4 sm:p-5">
@@ -194,7 +381,15 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
             </Card>
           )}
           {buses.map((b, i) => (
-            <BusCard key={b.id} bus={b} routes={routes} delay={i * 0.05} focused={sel === b.id} />
+            <BusCard
+              key={b.id}
+              bus={b}
+              routes={routes}
+              delay={i * 0.05}
+              focused={sel === b.id}
+              onRemove={removeBus}
+              removing={removing === b.id}
+            />
           ))}
         </div>
       </div>
@@ -222,7 +417,7 @@ function OffRouteProbe(b: Bus, routes: Route[]) {
   return best > r.tolerance;
 }
 
-function BusCard({ bus, routes, delay, focused }: { bus: Bus; routes: { id: string; name: string }[]; delay: number; focused: boolean }) {
+function BusCard({ bus, routes, delay, focused, onRemove, removing }: { bus: Bus; routes: { id: string; name: string }[]; delay: number; focused: boolean; onRemove?: (id: string) => void; removing?: boolean }) {
   const route = routes.find((r) => r.id === bus.meta?.routeId);
   const off = useDeviation(bus);
   const t = bus.telemetry;
@@ -291,6 +486,16 @@ function BusCard({ bus, routes, delay, focused }: { bus: Bus; routes: { id: stri
           >
             <Wrench className="h-3.5 w-3.5" />
             Clear crash
+          </button>
+        )}
+        {onRemove && (
+          <button
+            onClick={() => onRemove(bus.id)}
+            disabled={removing}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {removing ? "…" : "Remove"}
           </button>
         )}
       </div>
@@ -401,6 +606,120 @@ function AlertsView({ alerts, buses }: { alerts: Alert[]; buses: Bus[] }) {
   );
 }
 
+/* ---------------- Drivers ---------------- */
+
+function DriversView() {
+  const buses = useBuses();
+  const routes = useRoutes();
+  const users =
+    useValue<Record<string, { email?: string; name?: string; role?: string; busId?: string }>>(
+      "users",
+    ) ?? {};
+  const [sel, setSel] = useState<string | null>(null);
+
+  // A driver = a bus with a driver assigned (by uid or name).
+  const drivers = buses
+    .filter((b) => b.meta?.driverUid || b.meta?.driverName)
+    .map((b) => {
+      const u = b.meta?.driverUid ? users[b.meta.driverUid] : undefined;
+      return {
+        busId: b.id,
+        name: b.meta?.driverName ?? u?.name ?? "Unassigned driver",
+        email: u?.email,
+        plate: b.meta?.plate,
+        bus: b,
+      };
+    });
+
+  const active = sel ?? drivers[0]?.busId ?? null;
+  const activeDriver = drivers.find((d) => d.busId === active);
+  const events = useBusEvents(active);
+  const ratings = useRatings(active);
+
+  const stats = activeDriver
+    ? computeDriverStats(
+        {
+          busId: activeDriver.busId,
+          driverName: activeDriver.name,
+          driverUid: activeDriver.bus.meta?.driverUid,
+          plate: activeDriver.plate,
+          routeName: routes.find((r) => r.id === activeDriver.bus.meta?.routeId)?.name,
+          online: activeDriver.bus.online,
+          lastActive: activeDriver.bus.telemetry?.ts,
+          lastSpeed: activeDriver.bus.telemetry?.speed,
+          forceStopped: activeDriver.bus.telemetry?.force_stopped,
+        },
+        events,
+        ratings,
+      )
+    : null;
+
+  if (drivers.length === 0) {
+    return (
+      <Card>
+        <p className="p-6 text-sm text-muted">
+          No drivers assigned to any bus yet. Create a driver in{" "}
+          <span className="font-medium text-ink">Teams</span> and assign them a bus, then their
+          performance summary will appear here.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <SectionTitle
+        title="Driver performance"
+        hint="Incident history, passenger ratings and a 0–100 safety score per driver. Export any report as PDF."
+        action={
+          <button
+            onClick={() => stats && exportDriverPdf(stats)}
+            disabled={!stats}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+          >
+            <FileDown className="h-3.5 w-3.5" />
+            Export PDF
+          </button>
+        }
+      />
+
+      <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
+        {/* driver picker */}
+        <div className="space-y-2">
+          {drivers.map((d) => (
+            <button
+              key={d.busId}
+              onClick={() => setSel(d.busId)}
+              className={cn(
+                "w-full rounded-2xl border p-4 text-left transition",
+                active === d.busId
+                  ? "border-primary ring-2 ring-soft bg-white"
+                  : "border-line bg-white hover:border-primary/40",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-soft text-xs font-bold text-primary-dark">
+                  {d.name.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{d.name}</p>
+                  <p className="truncate font-mono text-[11px] text-faint">{d.busId}</p>
+                </div>
+                <Pill tone={d.bus.online ? "green" : "gray"} dot>
+                  {d.bus.online ? "Live" : "Idle"}
+                </Pill>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* report */}
+        <div>{stats && <DriverReport stats={stats} />}</div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Teams ---------------- */
 
 function Teams() {
@@ -417,7 +736,7 @@ function Teams() {
     try {
       const res = await fetch("/api/admin/create-user", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await authToken()}` },
         body: JSON.stringify({
           role: form.role,
           name: form.name,
@@ -438,9 +757,32 @@ function Teams() {
     }
   };
 
+  const [removing, setRemoving] = useState<string | null>(null);
+  const removeUser = async (uid: string) => {
+    if (!window.confirm("Remove this account? The person will no longer be able to sign in.")) return;
+    setRemoving(uid);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await authToken()}` },
+        body: JSON.stringify({ uid }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setMsg({ ok: true, text: "Account removed." });
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setRemoving(null);
+    }
+  };
+
   const field =
     "w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-soft";
-  const list = Object.values(users).sort((a, b) => a.name.localeCompare(b.name));
+  const list = Object.entries(users)
+    .filter(([, u]) => u.role !== "passenger")
+    .map(([uid, u]) => ({ uid, ...u }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-4">
@@ -543,6 +885,13 @@ function Teams() {
               <Pill tone={u.role === "operator" ? "green" : u.role === "driver" ? "amber" : "gray"}>
                 {u.role}
               </Pill>
+              <button
+                onClick={() => removeUser(u.uid)}
+                disabled={removing === u.uid || u.uid === auth.currentUser?.uid}
+                className="rounded-lg border border-red-100 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-40"
+              >
+                {removing === u.uid ? "…" : "Remove"}
+              </button>
             </li>
           ))}
         </ul>

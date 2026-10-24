@@ -59,6 +59,11 @@
     "settings": {
       ".read": "auth != null",
       ".write": "auth.token.role === 'operator'"
+    },
+    "arenaMap": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.role === 'operator'",
+      ".validate": "!newData.exists() || newData.isString()"
     }
   }
 }

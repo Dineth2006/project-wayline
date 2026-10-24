@@ -2,6 +2,7 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
+import { useArenaMap } from "@/hooks/useArenaMap";
 import type { Bus, Geofence, Pt, Route } from "@/lib/types";
 
 /**
@@ -82,6 +83,7 @@ export function WaylineMap({
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ i: number; moved: boolean } | null>(null);
+  const bgUrl = useArenaMap();
 
   /** screen coords → arena Pt (0..2) */
   const toPt = (e: { clientX: number; clientY: number }): Pt | null => {
@@ -127,7 +129,12 @@ export function WaylineMap({
         }}
       >
         <rect x={0} y={0} width={20} height={20} fill="#fbfcfb" />
-        <CityBlocks />
+        {bgUrl ? (
+          // uploaded 1:1 arena background (data URL, live from Firebase)
+          <image href={bgUrl} x={0} y={0} width={20} height={20} preserveAspectRatio="xMidYMid slice" />
+        ) : (
+          <CityBlocks />
+        )}
 
         {/* route polylines */}
         {shownRoutes.map((r) => {
