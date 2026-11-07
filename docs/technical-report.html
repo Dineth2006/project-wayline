@@ -1,0 +1,246 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><style>
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1c2430; line-height: 1.55; max-width: 8.2in; margin: 0 auto; font-size: 10.5pt; }
+h1 { font-size: 20pt; color: #0b5c46; border-bottom: 3px solid #0f8a6d; padding-bottom: 8px; margin-top: 0; }
+h2 { font-size: 13.5pt; color: #0b5c46; margin-top: 22px; page-break-after: avoid; }
+h3 { font-size: 11.5pt; page-break-after: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 9pt; page-break-inside: avoid; }
+th { background: #0f8a6d; color: #fff; text-align: left; padding: 6px 8px; }
+td { border: 1px solid #d7e0da; padding: 5px 8px; vertical-align: top; }
+tr:nth-child(even) td { background: #f2f8f5; }
+code { font-family: Consolas, monospace; font-size: 9pt; background: #eef3f0; padding: 1px 4px; border-radius: 3px; }
+pre { background: #f5f7f6; border: 1px solid #dde5e0; border-radius: 6px; padding: 10px 12px; overflow-x: hidden; font-size: 8.5pt; line-height: 1.4; page-break-inside: avoid; }
+pre code { background: none; padding: 0; }
+img { max-width: 100%; height: auto; display: block; margin: 12px auto; }
+blockquote { border-left: 3px solid #0f8a6d; margin: 8px 0; padding: 2px 12px; color: #445; background: #f4faf7; }
+ul, ol { padding-left: 22px; }
+li { margin-bottom: 3px; }
+</style></head><body><h1>Wayline — Technical Report</h1>
+<h2>1. Project overview</h2>
+<p>Wayline is the web platform of a real-time bus tracking IoT system. It acts as the
+"brain" of the project: the bus firmware/simulator streams position and status
+data into a shared realtime database, and Wayline visualises that data for three
+kinds of users:</p>
+<ul>
+<li><strong>Operators</strong> — live fleet map, route editing, force-stop commands, alerts,
+  team (account) management, bus registration/removal, driver behaviour
+  summaries with PDF export, and system settings.</li>
+<li><strong>Drivers</strong> — a simplified view of their own bus, current route, stop
+  commands from the operator, and their shift statistics.</li>
+<li><strong>Passengers</strong> — a public live map with per-bus estimated arrival times.</li>
+</ul>
+<p>All data is exchanged over <strong>Firebase Realtime Database (RTDB)</strong>, so the website
+needs no backend server of its own: the browser talks directly to Firebase, and
+the only server-side code consists of a few small API routes that need elevated
+privileges (account creation/deletion, bus deletion).</p>
+<h2>2. Technology choices and why</h2>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Version</th>
+<th>Role</th>
+<th>Why it was chosen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JavaScript/TypeScript</td>
+<td>TS 5</td>
+<td>Everything</td>
+<td>Single language across client and API routes; the type system catches data-shape bugs in the realtime layer</td>
+</tr>
+<tr>
+<td>Next.js (App Router)</td>
+<td>16.4</td>
+<td>Framework</td>
+<td>React framework with both client components and serverless API routes in one deployable; hot reload for development</td>
+</tr>
+<tr>
+<td>React</td>
+<td>19.3</td>
+<td>UI library</td>
+<td>Component model fits a dashboard with many independent live panels</td>
+</tr>
+<tr>
+<td>Tailwind CSS</td>
+<td>4</td>
+<td>Styling</td>
+<td>Utility-first CSS, zero style files to maintain; responsive rules written inline with each component</td>
+</tr>
+<tr>
+<td>Firebase RTDB</td>
+<td>v13 SDK</td>
+<td>Realtime data</td>
+<td>Built-in pub/sub listeners: every client updates the instant the bus moves. No WebSocket server to host. Free tier covers the project</td>
+</tr>
+<tr>
+<td>Firebase Authentication</td>
+<td>—</td>
+<td>Login/roles</td>
+<td>Email/password auth plus custom claims (<code>role</code>, <code>busId</code>) that drive the UI routing</td>
+</tr>
+<tr>
+<td>firebase-admin</td>
+<td>14</td>
+<td>Server-side auth</td>
+<td>Admin SDK lets API routes create/delete user accounts (something the public SDK cannot do)</td>
+</tr>
+<tr>
+<td>Leaflet + OpenStreetMap</td>
+<td>1.9</td>
+<td>Real map mode</td>
+<td>Free, keyless maps for the "real world" view; OSM tiles need no API key or billing</td>
+</tr>
+<tr>
+<td>Framer Motion</td>
+<td>14</td>
+<td>Animations</td>
+<td>Declarative enter/exit animations for cards and tab transitions</td>
+</tr>
+<tr>
+<td>lucide-react</td>
+<td>1.59</td>
+<td>Icons</td>
+<td>Tree-shakeable SVG icon set, consistent style</td>
+</tr>
+<tr>
+<td>jsPDF + jspdf-autotable</td>
+<td>4/5</td>
+<td>PDF export</td>
+<td>Generates driver behaviour reports entirely in the browser — no server involved</td>
+</tr>
+</tbody>
+</table>
+<h3>Why a 2D custom map as the default</h3>
+<p>The arena/track in this project operates on centimetre-scale 2D coordinates
+reported by the tracker hardware. A 1:1 canvas-based map (<code>WaylineMap</code>) plots
+those coordinates directly and can render an uploaded photo of the actual arena
+as its background, so the picture of the field and the live bus dots line up.
+The Leaflet/OSM mode exists for full-scale GPS deployment, where the same
+x/y fields hold longitude/latitude. The mode is a per-installation setting
+stored in Firebase, with a local fallback, and every client switches instantly.</p>
+<h2>3. Architecture</h2>
+<p><img alt="System architecture" src="architecture-diagram.png" /></p>
+<ul>
+<li><strong>No traditional backend.</strong> The Next.js app is mostly client-side React; the
+  Firebase SDK streams data straight into it.</li>
+<li><strong>API routes</strong> exist only where the Admin SDK is required (creating/deleting
+  accounts and buses). Each route verifies the caller's Firebase ID token and
+  checks the <code>role === "operator"</code> claim before acting.</li>
+<li><strong>Security rules</strong> on the database are the real access control: devices may
+  write only to their own bus node, operators may write commands and settings,
+  everyone authenticated may read the shared state.</li>
+</ul>
+<h2>4. Code structure</h2>
+<pre><code>src/
+  app/                    One file per screen (Next.js App Router)
+    page.tsx              Landing page
+    login/page.tsx        Login + passenger self-signup
+    operator/page.tsx     Operator console (largest file: fleet map,
+                          routes, drivers, teams, settings tabs)
+    driver/page.tsx       Driver dashboard
+    passenger/page.tsx    Passenger live tracking
+    api/signup/route.ts         Public account creation (passenger)
+    api/admin/create-user/route.ts   Operator creates driver/operator accounts
+    api/admin/delete-user/route.ts   Operator deletes an account (+unlinks bus)
+    api/admin/delete-bus/route.ts    Operator deletes a bus + all its data
+  components/             Reusable UI
+    Workspace.tsx         Shared sidebar/topbar shell for the consoles
+    WaylineMap.tsx        2D canvas/SVG arena map (custom mode)
+    OSMMap.tsx            Leaflet map (real-world mode)
+    LiveMap.tsx           Switches between the two map modes by setting
+    RouteEditor.tsx       Click-to-draw route editor (points, stops, tolerance)
+    DriverSummary.tsx     Driver behaviour stats panel
+    DriverReport.tsx      PDF export UI (uses jsPDF)
+    Card.tsx, Pill.tsx    Small presentational building blocks
+  hooks/                  Realtime subscriptions (thin wrappers over RTDB)
+    useRealtime.ts        Buses, routes, users, events, ratings, settings
+    useOperatorEngine.ts  Alert/deviation logic for the operator
+    useGeofenceAlerts.ts  Off-route + speed alert detection
+    useArenaMap.ts        Live reading of the uploaded arena picture
+    useSettings.ts        Map-mode settings (Firebase + localStorage fallback)
+    useArenaMap.ts        Arena picture subscription
+  lib/
+    firebase.ts           Browser Firebase init + auth token helper
+    firebaseAdmin.ts      Server Admin SDK + operator-verification helper
+    types.ts              Shared TypeScript models (Bus, Route, User, …)
+    geometry.ts           Distance/offset math (point-to-segment, deviation)
+    travel.ts             ETA estimation along a route
+    driverStats.ts        Pure-function driver behaviour statistics
+    driverPdf.ts          PDF report generation
+    imageCrop.ts          1:1 crop + 1024px downscale for the arena picture
+    guards.tsx            Role-based page guards (redirect wrong roles)
+    config.ts, cn.ts      Constants, class-name helper
+  context/AuthContext.tsx Firebase auth state for the whole app
+</code></pre>
+<h2>5. How the main parts work</h2>
+<p><strong>Authentication and roles.</strong> Users log in with Firebase Authentication.
+Each account carries custom claims: <code>role</code> (<code>operator</code>, <code>driver</code>, <code>passenger</code>)
+and, for drivers, the <code>busId</code> of their bus. <code>guards.tsx</code> wraps each screen and
+redirects users to the area their role allows. Passengers self-register through
+the signup route; operator and driver accounts can only be created by an
+operator through the admin API (Admin SDK), which also links the driver to a
+bus in the database.</p>
+<p><strong>Realtime data flow.</strong> <code>useRealtime.ts</code> attaches <code>onValue</code> listeners to the
+<code>buses/</code>, <code>routes/</code>, <code>users/</code>, <code>events/</code> and <code>ratings/</code> nodes. Any change — a
+new telemetry point from a bus, a command from the operator — updates the
+relevant state within milliseconds and React re-renders the affected panels.
+Buses are keyed by ID; each node holds <code>meta</code> (name, plate, route, colour),
+<code>telemetry</code> (x, y, heading, speed, battery, crash flag, force-stop flag) and
+<code>lastSeen</code>.</p>
+<p><strong>Route editor.</strong> In the Routes tab the operator clicks on the map to place
+waypoints and stop points, adjusts the off-route tolerance per route, and can
+drag existing points to fine-tune them. Routes are stored as ordered point
+lists plus a tolerance value; the same geometry library is used both to draw
+the route on screen and to compute live deviations.</p>
+<p><strong>Operator console.</strong> The operator page is a tabbed workspace:
+- <em>Fleet</em> — live map with every bus coloured by its route, status pills
+  (online/off-route/held/crash), force-stop and crash-clear commands, plus the
+  bus registration card (ID, name, plate, route, seats, colour) and per-bus
+  remove buttons.
+- <em>Routes</em> — the route editor.
+- <em>Drivers</em> — per-driver shift statistics (distance, average speed,
+  off-route time, alerts) computed by the pure function in <code>driverStats.ts</code>,
+  exportable as a PDF report generated client-side with jsPDF.
+- <em>Teams</em> — list of operator/driver accounts (passenger accounts are hidden),
+  new-account form, and account removal.
+- <em>Settings</em> — map-mode switch, arena picture upload (cropped and downscaled
+  in the browser, stored as a JPEG data URL), and operator contact details.</p>
+<p><strong>Driver view.</strong> Reads only the user's own bus node and the route it follows.
+Shows current position on the map, route progress, and whether the operator has
+issued a force-stop.</p>
+<p><strong>Passenger view.</strong> Reads all buses and the active route, computes an ETA to
+the selected stop with <code>travel.ts</code> (distance-along-route / speed), and shows
+the nearest buses on the live map.</p>
+<p><strong>Alerts.</strong> <code>useGeofenceAlerts.ts</code> / <code>useOperatorEngine.ts</code> watch telemetry
+against the route: if the bus is farther from the nearest route segment than
+the route's tolerance it raises an off-route alert; speed and crash flags raise
+the rest. The operator console aggregates them into the alerts list.</p>
+<h2>6. IoT integration points</h2>
+<p>The website was built to match the firmware's data contract:</p>
+<ul>
+<li><code>buses/&lt;busId&gt;/telemetry</code> — position (x, y), heading, speed, battery, crash,
+  force-stop. Written by the device (or the simulator).</li>
+<li><code>buses/&lt;busId&gt;/events</code> — discrete events (deviation warnings, stops).</li>
+<li><code>buses/&lt;busId&gt;/meta</code> — static bus details written by the operator UI.</li>
+<li><code>commands/&lt;busId&gt;/forceStop</code>, <code>clearCrash</code> — written by the operator, read
+  by the device.</li>
+<li><code>routes/</code> — shared route definitions used by both the UI and the firmware
+  for off-route detection.</li>
+</ul>
+<p>A simulator (<code>C:\dev\smart-bus\simulator</code>) streams fake telemetry through the
+same nodes, which is how the full web platform was tested before the hardware
+was assembled.</p>
+<h2>7. Building and running</h2>
+<pre><code class="language-bash">npm install        # install dependencies
+npm run dev        # development server on http://localhost:3000
+npm run build      # production build
+npm run seed       # optional: seed demo routes/buses/users
+</code></pre>
+<p>Firebase connection values live in <code>.env.local</code> (client config plus the
+service-account credentials used by the admin API). Database security rules
+are in <code>database.rules.json</code> and deployed with <code>firebase deploy --only database:rules</code>.</p>
+<h2>8. Scale</h2>
+<p>Approximately 3,000 lines of application code across 40 source files:
+5 screens, 4 API routes, 8 hooks, 12 library modules, 8 shared components.</p></body></html>
