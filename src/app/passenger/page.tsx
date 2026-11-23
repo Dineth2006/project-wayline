@@ -181,8 +181,7 @@ function Track() {
           {arrivals.length === 0 && (
             <Card>
               <p className="p-5 text-sm text-muted">
-                No buses serve this stop. Run <code>npm run seed</code> to load
-                the demo network.
+                No buses serve this stop yet.
               </p>
             </Card>
           )}

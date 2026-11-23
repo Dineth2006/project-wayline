@@ -5,5 +5,4 @@ export const NETWORK = {
   buses: 2,
   routes: 1,
   routeName: "Loop A",
-  city: "Demo City",
 };

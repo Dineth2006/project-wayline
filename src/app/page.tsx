@@ -24,17 +24,17 @@ const roles = [
   {
     icon: CircleUserRound,
     title: "Riders",
-    body: "Pick a route, watch the bus crawl closer on the map, and get a ping the moment it reaches your stop.",
+    body: "Pick a route, watch the bus get closer on the map, and get a ping the moment it reaches your stop.",
   },
   {
     icon: Bus,
     title: "Drivers",
-    body: "A quiet cockpit with the next stop, live ETA and your trip report — and the on-board drive controls when you need them.",
+    body: "The next stop, a live ETA, and your trip report — plus the on-board drive controls when you need them.",
   },
   {
     icon: Gauge,
     title: "Operators",
-    body: "Every bus on one map. Crashes, off-route movement and slow GPS ping straight to the fleet dashboard.",
+    body: "Every bus on one map, with crashes, off-route movement, and slow GPS pings on the fleet dashboard.",
   },
 ];
 
@@ -82,7 +82,7 @@ export default function Home() {
             className="inline-flex items-center gap-2 rounded-full bg-soft px-3.5 py-1.5 text-xs font-semibold text-primary-dark"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
-            Live tracking on {NETWORK.city} — {NETWORK.buses} buses, {NETWORK.routes} route
+            Live network — {NETWORK.buses} buses · {NETWORK.routes} route
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
@@ -90,8 +90,8 @@ export default function Home() {
             transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]"
           >
-            A better way to be{" "}
-            <span className="text-primary">on your way.</span>
+            See your bus{" "}
+            <span className="text-primary">in real time.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 18 }}
@@ -99,9 +99,9 @@ export default function Home() {
             transition={{ duration: 0.55, delay: 0.16 }}
             className="mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
           >
-            Wayline follows every bus in real time — riders see honest ETAs and
-            arrival alerts, drivers get a calm cockpit, and operators watch the
-            whole fleet from one map.
+            Wayline tracks every bus live. Riders see arrival times and get a
+            ping at their stop, drivers get a calm trip view, and operators
+            watch the whole fleet on one map.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -176,7 +176,7 @@ export default function Home() {
           <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 shadow-card backdrop-blur">
             <Radio className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold">{NETWORK.routeName}</span>
-            <span className="text-xs text-muted">— live preview</span>
+            <span className="text-xs text-muted">— network preview</span>
           </div>
         </motion.div>
       </section>
@@ -235,19 +235,19 @@ export default function Home() {
                 icon: MapPin,
                 n: "01",
                 t: "Pick your stop",
-                b: "Search a route and the bus you're taking. Wayline shows the real distance to your stop, not a guess.",
+                b: "Search a route and the bus you're taking. Wayline shows the distance to your stop from the bus's live position.",
               },
               {
                 icon: Bus,
                 n: "02",
                 t: "Watch it come",
-                b: "Follow the bus on the live map with an honest minute-by-minute ETA, refreshed every second.",
+                b: "Follow the bus on the live map with an ETA that updates as the bus moves.",
               },
               {
                 icon: Bell,
                 n: "03",
                 t: "Get there early",
-                b: "Save places and get a notification the moment the bus enters the zone — stand at the curb, not the street.",
+                b: "Save a stop and get a browser notification the moment the bus enters its zone.",
               },
             ].map((s, i) => (
               <motion.div
@@ -279,7 +279,7 @@ export default function Home() {
             </span>
             <span className="font-semibold text-white">Wayline</span>
           </span>
-          <p>© 2026 Wayline — built for a city in motion.</p>
+          <p>© 2026 Wayline</p>
         </div>
       </footer>
     </div>

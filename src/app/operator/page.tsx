@@ -162,7 +162,7 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
             className={`rounded-xl border p-4 text-left transition ${mode === "arena" ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-300" : "border-slate-200 bg-white hover:border-emerald-300"}`}
           >
             <p className="text-sm font-bold text-slate-800">Arena (custom map)</p>
-            <p className="mt-1 text-xs text-slate-500">2D city map in metres — the current simulator / 2 m arena. Default.</p>
+            <p className="mt-1 text-xs text-slate-500">2D map in metres — the 2 m arena layout. Default.</p>
           </button>
           <button
             onClick={() => save({ mapMode: "google" })}
@@ -376,8 +376,7 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
           {buses.length === 0 && (
             <Card>
               <p className="p-5 text-sm text-muted">
-                No buses registered yet — run <code>npm run seed</code> to add
-                the demo fleet.
+                No buses registered yet — add one with the form above.
               </p>
             </Card>
           )}
