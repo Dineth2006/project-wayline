@@ -163,7 +163,7 @@ void handleCommands() {
   FirebaseJson c;
   if(!Firebase.getJSON(fbdo, CMD_PATH.c_str(), &c)) return;
 
-  FirebaseJsonData fd, kd, cd;
+  FirebaseJsonData fd, kd;
   bool forceStop  = c.get(fd, "forceStop")  ? fd.to<bool>() : false;
   bool clearCrash = c.get(kd, "clearCrash") ? kd.to<bool>() : false;
 
@@ -186,16 +186,45 @@ void handleCommands() {
     Firebase.set(fbdo, CMD_PATH + "/clearCrash", false);
   }
 
-  // optional manual drive commands (driver page / manual mode)
-  int cmd = c.get(cd, "driveCmd") ? cd.to<int>() : 0;   // 0 stop, 1 fwd, 2 back, 3 left, 4 right
-  if (!held) {
-    motorOn = (cmd != 0);
-    switch (cmd) {
-      case 1: setMotors( DRIVE_SPEED,  DRIVE_SPEED); break;
-      case 2: setMotors(-DRIVE_SPEED, -DRIVE_SPEED); break;
-      case 3: setMotors( 0,             DRIVE_SPEED); break;
-      case 4: setMotors( DRIVE_SPEED,   0);          break;
-      default: setMotors(0, 0);
+  // Manual drive commands — verified protocol (driver page + simulator send):
+  //   commands/<bus>/drive = { cmd: "F"|"B"|"L"|"R"|"S"|"FF"|"X", ts }
+  // While held, the web re-sends the same cmd with a FRESH ts ~every 200 ms,
+  // so a fresh ts is how "still held" is communicated. Fail-safe: when no
+  // fresh ts has been seen for 2 s (released, dropped link, stale node from
+  // a previous session) the motors stop. Device clock is NTP-synced in setup.
+  static double   lastDriveTs = 0;
+  static bool     driveActive = false;
+  static uint32_t activeSince = 0;
+  FirebaseJsonData dts, dcmd;
+  if (c.get(dts, "drive/ts")) {
+    double ts = dts.to<double>();
+    if (ts != lastDriveTs) {                    // a new command arrived
+      lastDriveTs = ts;
+      double nowMs = (double)(time(nullptr) * 1000LL);
+      if (ts >= nowMs - 10000) {                // within 10 s of now (skew-safe)
+        driveActive = true;
+        activeSince = millis();
+      } else {
+        driveActive = false;                    // stale node — ignore
+      }
+    }
+  }
+  bool driveFresh = driveActive && (millis() - activeSince <= 2000);
+  if (driveActive && !driveFresh) {             // hold window expired = released
+    driveActive = false;
+    if (motorOn) { motorsOff(); Serial.println("[DRV] hold expired — motors stopped"); }
+  }
+  if (!held && !crash && driveFresh) {
+    if (!c.get(dcmd, "drive/cmd")) { motorsOff(); }
+    else {
+      String s = dcmd.to<String>();
+      if (s == "F")      setMotors( DRIVE_SPEED,  DRIVE_SPEED);
+      else if (s == "B") setMotors(-DRIVE_SPEED, -DRIVE_SPEED);
+      else if (s == "L") setMotors( 0,             DRIVE_SPEED);
+      else if (s == "R") setMotors( DRIVE_SPEED,   0);
+      else if (s == "FF")setMotors( 100,           100);
+      else               setMotors( 0,             0);   // "S" / "X" / unknown
+      motorOn = (s == "F" || s == "B" || s == "L" || s == "R" || s == "FF");
     }
   }
 }
