@@ -103,7 +103,7 @@ function TripBanner({ busId }: { busId?: string }) {
                 Speed
               </p>
               <p className="text-2xl font-bold tabular-nums">
-                {t ? Math.round(t.speed) : "—"}
+                {t?.speed != null ? Math.round(t.speed) : "—"}
                 <span className="ml-1 text-xs font-medium text-white/60">cm/s</span>
               </p>
             </div>
@@ -180,9 +180,9 @@ function TripStats({ busId, routeId }: { busId: string; routeId: string }) {
   const route = routes.find((r) => r.id === routeId);
   const t = bus?.telemetry;
 
-  const prog = t && route ? routeProgress(t.location, route) : null;
+  const prog = t?.location && route ? routeProgress(t.location, route) : null;
   const next = prog?.nextStop ?? null;
-  const eta = next && t ? etaSeconds(next.dist, t.speed) : null;
+  const eta = next && t?.speed ? etaSeconds(next.dist, t.speed) : null;
 
   return (
     <>
@@ -196,7 +196,7 @@ function TripStats({ busId, routeId }: { busId: string; routeId: string }) {
         <StatCard
           label="ETA"
           value={eta != null ? `${Math.round(eta)}s` : "—"}
-          sub={next && t ? `at ${Math.round(t.speed)} cm/s` : "waiting for speed"}
+          sub={next && t?.speed ? `at ${Math.round(t.speed)} cm/s` : "waiting for speed"}
           icon={<Gauge className="h-4 w-4" />}
           delay={0.05}
         />

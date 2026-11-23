@@ -14,6 +14,8 @@ export interface Telemetry {
   obstacle_cm?: number;
   motor_enabled: boolean;
   force_stopped: boolean;
+  /** device-link heartbeat written by firmware; absent on old devices/simulator */
+  connected?: boolean;
   ts: number;
 }
 

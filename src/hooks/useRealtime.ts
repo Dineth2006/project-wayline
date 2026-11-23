@@ -25,7 +25,13 @@ export function useBuses() {
             id,
             meta: v.meta,
             telemetry: v.telemetry,
-            online: v.telemetry && Date.now() - v.telemetry.ts < 4000,
+            // online = last write fresh; when the device reports the `connected`
+            // flag (new firmware) the flag must also be true — old devices and
+            // the simulator don't send it, so we fall back to freshness alone.
+            online:
+              !!v.telemetry &&
+              Date.now() - v.telemetry.ts < 4000 &&
+              (v.telemetry.connected === undefined ? true : v.telemetry.connected === true),
           })),
         );
       }),
@@ -56,7 +62,7 @@ export function useAlerts() {
         setAlerts(
           Object.entries(s.val() ?? {}).map(([k, v]: [string, any]) => {
             const [busId, type] = k.split("_");
-            return { busId, type: type as "crash" | "deviation", msg: v.msg, ts: v.ts, active: v.active } as Alert;
+            return { busId: v.busId ?? busId, type: (v.type ?? type) as "crash" | "deviation", msg: v.msg, ts: v.ts, active: v.active } as Alert;
           }),
         ),
       ),
@@ -112,10 +118,10 @@ export function useDeviation(bus: Bus | undefined) {
   const routes = useRoutes();
   const [off, setOff] = useState(false);
   useEffect(() => {
-    if (!bus?.meta || !bus.online) return setOff(false);
+    if (!bus?.meta || !bus.online || !bus.telemetry?.location) return setOff(false);
     const r = routes.find((x) => x.id === bus.meta!.routeId);
     if (!r) return setOff(false);
-    setOff(distToRoute(bus.telemetry!.location, r.points, r.closed) > r.tolerance);
+    setOff(distToRoute(bus.telemetry.location, r.points, r.closed) > r.tolerance);
   }, [bus, routes]);
   return off;
 }

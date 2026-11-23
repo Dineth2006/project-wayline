@@ -32,7 +32,7 @@ export function useGeofenceAlerts() {
     if (!user || !fences.length) return;
     for (const f of fences) {
       const b = f.busId ? buses.find((x) => x.id === f.busId) : undefined;
-      if (!b?.telemetry) continue;
+      if (!b?.telemetry?.location) continue;
       const d = Math.hypot(b.telemetry.location.x - f.x, b.telemetry.location.y - f.y);
       const key = f.busId ? `${f.busId}:${f.label}` : f.label;
       if (d <= f.r && (!fired.current[key] || Date.now() - fired.current[key] > 120_000)) {

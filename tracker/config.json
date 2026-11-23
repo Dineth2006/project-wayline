@@ -1,0 +1,17 @@
+{
+  "_readme": "Fill these in. db_url + api_key from C:\\dev\\wayline\\.env.local (NEXT_PUBLIC_FIREBASE_DATABASE_URL / NEXT_PUBLIC_FIREBASE_API_KEY). device_email/device_password = the bus's seeded device account (bus_01@device.local + DEVICE_PASSWORD). feed_url = the stream URL printed by the IP Webcam app on the phone.",
+
+  "db_url": "https://bus-tracking-system-2cfc8-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "api_key": "PUT_NEXT_PUBLIC_FIREBASE_API_KEY_HERE",
+  "device_email": "bus_01@device.local",
+  "device_password": "PUT_DEVICE_PASSWORD_HERE",
+  "bus_id": "bus_01",
+
+  "feed_url": "http://192.168.1.50:8080/video",
+
+  "arena_size_m": 2.0,
+  "process_width": 640,
+  "corners_file": "arena_corners.json",
+  "red_min_area": 30,
+  "corner_min_area": 60
+}

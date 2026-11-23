@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Siren,
   Trash2,
+  User,
   UserPlus,
   Users,
   Wrench,
@@ -399,7 +400,7 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
 
 function OffRouteProbe(b: Bus, routes: Route[]) {
   // lightweight re-computation for the stat card (the hook below stays for per-bus state)
-  if (!b.online || !b.telemetry || !b.meta) return false;
+  if (!b.online || !b.telemetry?.location || !b.meta) return false;
   const r = routes.find((x) => x.id === b.meta!.routeId);
   if (!r) return false;
   let best = Infinity;
@@ -415,6 +416,14 @@ function OffRouteProbe(b: Bus, routes: Route[]) {
     best = Math.min(best, Math.hypot(b.telemetry.location.x - (a.x + t * dx), b.telemetry.location.y - (a.y + t * dy)));
   }
   return best > r.tolerance;
+}
+
+function timeAgo(ts: number) {
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  return `${Math.floor(m / 60)}h ago`;
 }
 
 function BusCard({ bus, routes, delay, focused, onRemove, removing }: { bus: Bus; routes: { id: string; name: string }[]; delay: number; focused: boolean; onRemove?: (id: string) => void; removing?: boolean }) {
@@ -449,14 +458,25 @@ function BusCard({ bus, routes, delay, focused, onRemove, removing }: { bus: Bus
           )}
         </span>
       </div>
+      {(bus.meta?.driverName || !bus.online) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+          {bus.meta?.driverName && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 font-medium text-muted">
+              <User className="h-3 w-3" />
+              {bus.meta.driverName}
+            </span>
+          )}
+          {!bus.online && t && <span className="text-faint">last seen {timeAgo(t.ts)}</span>}
+        </div>
+      )}
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-canvas p-2">
-          <p className="text-lg font-semibold tabular-nums">{t ? Math.round(t.speed) : "—"}</p>
+          <p className="text-lg font-semibold tabular-nums">{t?.speed != null ? Math.round(t.speed) : "—"}</p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-faint">cm/s</p>
         </div>
         <div className="rounded-xl bg-canvas p-2">
           <p className="text-lg font-semibold tabular-nums">
-            {t ? `${t.location.x.toFixed(2)}, ${t.location.y.toFixed(2)}` : "—"}
+            {t?.location ? `${t.location.x.toFixed(2)}, ${t.location.y.toFixed(2)}` : "—"}
           </p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-faint">x · y</p>
         </div>
@@ -758,6 +778,8 @@ function Teams() {
   };
 
   const [removing, setRemoving] = useState<string | null>(null);
+  const [swap, setSwap] = useState<Record<string, string>>({}); // uid -> chosen busId
+  const [swapBusy, setSwapBusy] = useState<string | null>(null);
   const removeUser = async (uid: string) => {
     if (!window.confirm("Remove this account? The person will no longer be able to sign in.")) return;
     setRemoving(uid);
@@ -774,6 +796,26 @@ function Teams() {
       setMsg({ ok: false, text: (e as Error).message });
     } finally {
       setRemoving(null);
+    }
+  };
+
+  const doSwap = async (uid: string, busId: string) => {
+    setSwapBusy(uid);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/assign-driver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await authToken()}` },
+        body: JSON.stringify({ uid, busId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Swap failed.");
+      setMsg({ ok: true, text: `Driver moved to ${busId}.` });
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally {
+      setSwapBusy(null);
+      setSwap((s) => ({ ...s, [uid]: busId }));
     }
   };
 
@@ -892,6 +934,29 @@ function Teams() {
               >
                 {removing === u.uid ? "…" : "Remove"}
               </button>
+              {u.role === "driver" && (
+                <div className="mt-2 flex w-full items-center gap-2 border-t border-line pt-2 sm:ml-[calc(2rem+0.75rem)]">
+                  <span className="text-[11px] font-medium text-faint">Swap bus:</span>
+                  <select
+                    value={swap[u.uid] ?? u.busId ?? ""}
+                    onChange={(e) => setSwap((s) => ({ ...s, [u.uid]: e.target.value }))}
+                    className="flex-1 rounded-lg border border-line bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
+                  >
+                    {buses.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.meta?.name ?? b.id} {b.meta?.plate ? `(${b.meta.plate})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => void doSwap(u.uid, swap[u.uid] ?? u.busId ?? "")}
+                    disabled={swapBusy === u.uid || (swap[u.uid] ?? u.busId ?? "") === (u.busId ?? "")}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-dark disabled:opacity-40"
+                  >
+                    {swapBusy === u.uid ? "…" : "Apply"}
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>

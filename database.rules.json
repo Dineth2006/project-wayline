@@ -10,7 +10,10 @@
       ".read": "auth != null",
       "$busId": {
         "meta": { ".write": "auth.token.role === 'operator'" },
-        "telemetry": { ".write": "auth.token.role === 'device' && auth.token.busId === $busId" }
+        "telemetry": {
+          ".write": "auth.token.role === 'device' && auth.token.busId === $busId",
+          "connected": { ".write": "auth.token.role === 'device' && auth.token.busId === $busId" }
+        }
       }
     },
     "routes": { ".read": "auth != null", ".write": "auth.token.role === 'operator'" },

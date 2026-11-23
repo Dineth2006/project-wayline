@@ -17,6 +17,7 @@ export function useOperatorEngine() {
   const routes = useRoutes();
   const offSince = useRef<Record<string, number>>({});
   const lastAlarm = useRef<Record<string, number>>({});
+  const wasCrashed = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     const now = Date.now();
@@ -25,6 +26,7 @@ export function useOperatorEngine() {
       const crashed = !!bus.telemetry?.crash;
 
       if (crashed) {
+        // transition into crash -> raise (or refresh) the alert
         const key = `crash-${bus.id}`;
         if (!lastAlarm.current[key] || now - lastAlarm.current[key] > COOLDOWN) {
           lastAlarm.current[key] = now;
@@ -36,10 +38,17 @@ export function useOperatorEngine() {
             active: true,
           });
         }
+        wasCrashed.current[bus.id] = true;
         continue;
       }
 
-      if (route && bus.online && bus.telemetry) {
+      // transition out of crash (device cleared it) -> auto-resolve the alert
+      if (wasCrashed.current[bus.id]) {
+        wasCrashed.current[bus.id] = false;
+        void update(ref(db, `alerts/${bus.id}_crash`), { active: false });
+      }
+
+      if (route && bus.online && bus.telemetry?.location) {
         const d = distToRoute(bus.telemetry.location, route.points, route.closed);
         if (d > route.tolerance) {
           if (!offSince.current[bus.id]) offSince.current[bus.id] = now;

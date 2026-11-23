@@ -66,13 +66,13 @@ function Track() {
         const route = routes.find((r) => r.id === b.meta?.routeId);
         if (!route || !(route.stops ?? []).some((s) => s.name === stop)) return null;
         const t = b.telemetry;
-        if (!t) return { bus: b, eta: null, dist: null as number | null, online: b.online };
+        if (!t?.location) return { bus: b, eta: null, dist: null as number | null, online: b.online };
         const prog = routeProgress(t.location, route);
         const d = (route.stops ?? []).find((s) => s.name === stop);
         const distM = d ? Math.hypot(t.location.x - d.x, t.location.y - d.y) : null;
         return {
           bus: b,
-          eta: distM != null ? etaSeconds(distM, t.speed) : null,
+          eta: distM != null && t.speed ? etaSeconds(distM, t.speed) : null,
           dist: distM,
           online: b.online,
         };
