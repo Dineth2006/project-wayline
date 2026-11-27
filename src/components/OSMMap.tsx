@@ -63,7 +63,7 @@ export function OSMMap({
   useEffect(() => {
     if (!lmod) return;
     if (!elRef.current || mapRef.current) return;
-    const start = center ? [center.y, center.x] : [7.2906, 80.6337]; // Colombo default
+    const start = center ? [center.y, center.x] : [6.91435, 79.97268]; // SLIIT Malabe Campus default
     const map = lmod.map(elRef.current, { zoomControl: true }).setView(start as L.LatLngTuple, 13);
     lmod.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
