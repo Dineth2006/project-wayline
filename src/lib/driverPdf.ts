@@ -18,7 +18,7 @@ export function exportDriverPdf(s: DriverStats) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text("Wayline — Driver Performance Report", 40, 40);
+  doc.text("Wayline - Driver Performance Report", 40, 40);
 
   // identity block
   doc.setTextColor(30, 41, 59);
@@ -41,7 +41,7 @@ export function exportDriverPdf(s: DriverStats) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...scoreColor);
-  doc.text(`Safety score: ${s.safetyScore}/100 — ${verdict(s.safetyScore)}`, 40, 148);
+  doc.text(`Safety score: ${s.safetyScore}/100 - ${verdict(s.safetyScore)}`, 40, 148);
 
   // key metrics table
   autoTable(doc, {
@@ -74,11 +74,11 @@ export function exportDriverPdf(s: DriverStats) {
 
   const rows = s.incidents.length
     ? s.incidents.map((e) => [
-        e.ts ? new Date(e.ts).toLocaleString() : "—",
+        e.ts ? new Date(e.ts).toLocaleString() : "-",
         eventLabel(e.type),
         typeof e.value === "number" && Math.abs(e.value) >= 1 ? `${e.value.toFixed(1)} g` : "",
       ])
-    : [["—", "No recorded incidents — clean record", ""]];
+    : [["-", "No recorded incidents - clean record", ""]];
 
   autoTable(doc, {
     startY: y + 10,
@@ -105,7 +105,7 @@ export function exportDriverPdf(s: DriverStats) {
     doc.setFontSize(8.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `Wayline bus tracking system — confidential driver record — page ${i}/${pages}`,
+      `Wayline bus tracking system - confidential driver record - page ${i}/${pages}`,
       40,
       doc.internal.pageSize.getHeight() - 24,
     );

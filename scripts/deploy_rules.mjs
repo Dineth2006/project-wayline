@@ -22,7 +22,7 @@ const j = await r.json();
 if (!j.idToken) { console.log("sign-in FAILED:", JSON.stringify(j).slice(0, 200)); process.exit(1); }
 console.log(`signed in (${Date.now() - t0} ms)`);
 
-console.log("deploying rules (first hit compiles the route — may take a while)…");
+console.log("deploying rules (first hit compiles the route - may take a while)…");
 const t1 = Date.now();
 const res = await fetch("http://localhost:3000/api/admin/deploy-rules", {
   method: "POST",

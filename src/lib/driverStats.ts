@@ -1,5 +1,5 @@
 /**
- * Driver performance stats — pure computation, no Firebase.
+ * Driver performance stats - pure computation, no Firebase.
  * Built from the append-only `events/<busId>` log (crash, harsh_brake,
  * harsh_accel, obstacle, deviation) plus accumulated `ratings/<busId>`.
  */
@@ -149,7 +149,7 @@ export function computeDriverStats(
 
 /** "3h ago" style relative time for the incident log. */
 export function timeAgo(ts?: number): string {
-  if (!ts) return "—";
+  if (!ts) return "-";
   const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
   if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
@@ -174,8 +174,8 @@ export function eventLabel(type: string): string {
 
 /** Verdict line used on the report + PDF. */
 export function verdict(score: number): string {
-  if (score >= 90) return "Excellent — safe driving record";
-  if (score >= 75) return "Good — minor issues to monitor";
-  if (score >= 50) return "Fair — review recommended";
-  return "Poor — corrective action advised";
+  if (score >= 90) return "Excellent - safe driving record";
+  if (score >= 75) return "Good - minor issues to monitor";
+  if (score >= 50) return "Fair - review recommended";
+  return "Poor - corrective action advised";
 }

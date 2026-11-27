@@ -1,12 +1,12 @@
 /**
- * sync_user_claims.mjs — keep RTDB `users/<uid>` (role, busId) in sync with
+ * sync_user_claims.mjs - keep RTDB `users/<uid>` (role, busId) in sync with
  * each Firebase Auth user's custom claims (the authoritative source the
  * security rules and login redirect use).
  *
  * Run:  node --env-file=.env.local scripts/sync_user_claims.mjs
  *
  * Fixes the "driver logs in but sees 'No bus'" case, where the claim has a
- * busId but the RTDB node doesn't. Idempotent — safe to re-run.
+ * busId but the RTDB node doesn't. Idempotent - safe to re-run.
  */
 import { initializeApp, cert } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";

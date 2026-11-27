@@ -16,12 +16,12 @@ interface Props {
 type Mode = "point" | "stop" | "move";
 
 /**
- * Operator route editor — create, edit, delete routes in the current map mode.
+ * Operator route editor - create, edit, delete routes in the current map mode.
  * arena: 2D city map (metres) · google: real GPS coordinates (lng/lat).
  */
 export function RouteEditor({ routes, settings }: Props) {
   // map mode: global setting (RTDB, or browser fallback when rules deny it),
-  // overridable here — persisted via saveSettingsLocal so the whole app follows.
+  // overridable here - persisted via saveSettingsLocal so the whole app follows.
   const [mapMode, setMapMode] = useState<"arena" | "google">(settings.mapMode === "google" ? "google" : "arena");
   const google = mapMode === "google";
   const [editingId, setEditingId] = useState<string | null>(null); // "new" or a route id
@@ -147,7 +147,7 @@ export function RouteEditor({ routes, settings }: Props) {
           ))}
           {routes.length === 0 && (
             <p className="rounded-xl border border-dashed border-emerald-200 p-4 text-center text-xs text-slate-400">
-              No routes yet — create one.
+              No routes yet - create one.
             </p>
           )}
         </div>
@@ -233,7 +233,7 @@ export function RouteEditor({ routes, settings }: Props) {
           </button>
           <span className="ml-auto text-[11px] text-slate-400">
             {mode === "move"
-              ? "Move mode: drag a numbered point to a new spot — map clicks are ignored"
+              ? "Move mode: drag a numbered point to a new spot - map clicks are ignored"
               : `Click the map to ${mode === "point" ? "add route points" : "place a stop"} · click a numbered point to remove it · drag to move it`}
           </span>
         </div>

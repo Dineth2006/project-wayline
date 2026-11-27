@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wayline — live bus network",
+  title: "Wayline - live bus network",
   description:
     "A better way to be on your way. Live tracking for riders, drivers and operators.",
 };

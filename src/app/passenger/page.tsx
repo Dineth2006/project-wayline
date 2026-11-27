@@ -100,7 +100,7 @@ function Track() {
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="text-6xl font-bold tabular-nums tracking-tight sm:text-7xl"
               >
-                {best?.eta != null ? Math.max(1, Math.round(best.eta)) : "—"}
+                {best?.eta != null ? Math.max(1, Math.round(best.eta)) : "-"}
               </motion.span>
             </AnimatePresence>
             <span className="pb-2 text-lg font-medium text-white/60">
@@ -170,7 +170,7 @@ function Track() {
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold tabular-nums">
-                  {a.eta != null ? `${Math.round(a.eta)}s` : "—"}
+                  {a.eta != null ? `${Math.round(a.eta)}s` : "-"}
                 </p>
                 <p className="text-[10px] font-medium uppercase tracking-wider text-faint">
                   {a.online ? "to " + stop : "offline"}
@@ -400,7 +400,7 @@ function AlertsTab() {
           ))}
           {fences.length === 0 && (
             <p className="rounded-2xl border border-dashed border-line p-5 text-center text-sm text-muted">
-              No alerts yet — add one above.
+              No alerts yet - add one above.
             </p>
           )}
         </div>

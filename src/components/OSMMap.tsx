@@ -21,7 +21,7 @@ interface Props {
 }
 
 /**
- * OpenStreetMap (Leaflet) — real-world map, free tiles, no API key.
+ * OpenStreetMap (Leaflet) - real-world map, free tiles, no API key.
  * In google mode: Pt.x = lng, Pt.y = lat.
  */
 export function OSMMap({
@@ -150,7 +150,7 @@ export function OSMMap({
         const ll = (e.target as L.Marker).getLatLng();
         editMoveRef.current?.(i, { x: +ll.lng.toFixed(6), y: +ll.lat.toFixed(6) });
       });
-      m.bindTooltip(`Point ${i + 1} — drag to move, click to delete`, { direction: "top" });
+      m.bindTooltip(`Point ${i + 1} - drag to move, click to delete`, { direction: "top" });
       m.addTo(layer);
       bounds.push([p.y, p.x]);
     });

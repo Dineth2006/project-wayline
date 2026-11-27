@@ -18,7 +18,7 @@ function readLocal(): AppSettings {
 /**
  * Live app settings from RTDB `settings/` (operator-controlled).
  * Falls back to browser storage when the Firebase node is missing or the
- * rules deny it — the app still works (mode/key apply per browser).
+ * rules deny it - the app still works (mode/key apply per browser).
  */
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>({});
@@ -45,7 +45,7 @@ export function saveSettingsLocal(patch: Record<string, unknown>) {
     const next = { ...readLocal(), ...patch };
     window.localStorage.setItem(LS_KEY, JSON.stringify(next));
   } catch {
-    /* storage full/blocked — ignore */
+    /* storage full/blocked - ignore */
   }
 }
 

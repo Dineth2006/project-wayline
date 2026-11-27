@@ -26,7 +26,7 @@ export function useBuses() {
             meta: v.meta,
             telemetry: v.telemetry,
             // online = last write fresh; when the device reports the `connected`
-            // flag (new firmware) the flag must also be true — old devices and
+            // flag (new firmware) the flag must also be true - old devices and
             // the simulator don't send it, so we fall back to freshness alone.
             online:
               !!v.telemetry &&

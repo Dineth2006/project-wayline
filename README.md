@@ -1,4 +1,4 @@
-# Wayline — Smart Real-Time Bus Tracking & Safety Management System
+# Wayline - Smart Real-Time Bus Tracking & Safety Management System
 
 A full-stack IoT and web platform for real-time public bus tracking, driver monitoring, passenger seat booking, and remote safety intervention. Built with **Next.js (App Router)**, **Firebase Realtime Database & Authentication**, **OpenStreetMap (Leaflet)**, and an **ESP32-WROOM-32** hardware prototype.
 
@@ -68,15 +68,15 @@ A full-stack IoT and web platform for real-time public bus tracking, driver moni
 
 Access control is enforced in [`database.rules.json`](database.rules.json) using Firebase Auth custom claims (`role` and `busId`):
 
-- `buses/<busId>/meta` — Bus metadata (`name`, `plate`, `routeId`, `seats`, `color`, `driverUid`, `driverName`)
-- `buses/<busId>/telemetry` — Live device telemetry (`location: { x, y }`, `speed`, `crash`, `obstacle`, `obstacle_cm`, `motor_enabled`, `force_stopped`, `connected`, `ts`)
-- `routes/<routeId>` — Route waypoints, stops, closed flag, and deviation `tolerance`
-- `commands/<busId>` — `drive` (`{ cmd, ts }`), `forceStop`, `clearCrash`, `warning`, `warningAck`
-- `events/<busId>` — Timestamped `crash` and `obstacle` logs
-- `alerts` — Active crash and route-deviation alerts
-- `seats/<busId>` & `ratings/<busId>` — Passenger seat reservations and ratings
-- `geofences/<uid>` — Per-user geofence definitions
-- `settings` — Map mode (`"arena"` or `"google"` for OpenStreetMap)
+- `buses/<busId>/meta` - Bus metadata (`name`, `plate`, `routeId`, `seats`, `color`, `driverUid`, `driverName`)
+- `buses/<busId>/telemetry` - Live device telemetry (`location: { x, y }`, `speed`, `crash`, `obstacle`, `obstacle_cm`, `motor_enabled`, `force_stopped`, `connected`, `ts`)
+- `routes/<routeId>` - Route waypoints, stops, closed flag, and deviation `tolerance`
+- `commands/<busId>` - `drive` (`{ cmd, ts }`), `forceStop`, `clearCrash`, `warning`, `warningAck`
+- `events/<busId>` - Timestamped `crash` and `obstacle` logs
+- `alerts` - Active crash and route-deviation alerts
+- `seats/<busId>` & `ratings/<busId>` - Passenger seat reservations and ratings
+- `geofences/<uid>` - Per-user geofence definitions
+- `settings` - Map mode (`"arena"` or `"google"` for OpenStreetMap)
 
 ---
 

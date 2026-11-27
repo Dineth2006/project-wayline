@@ -96,15 +96,15 @@ function LoginPanel() {
             className="mt-4 max-w-sm text-sm leading-relaxed text-white/70"
           >
             Log in to follow your route, drive your bus, or watch the whole
-            network — all in one calm, live picture.
+            network - all in one calm, live picture.
           </motion.p>
           <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse-dot" />
-            Fleet live — ETAs refresh every second
+            Fleet live - ETAs refresh every second
           </div>
         </div>
         <p className="relative text-xs text-white/50">
-          © 2026 Wayline — built for a city in motion.
+          © 2026 Wayline - built for a city in motion.
         </p>
       </div>
 
@@ -218,7 +218,7 @@ function LoginPanel() {
           </form>
 
           <p className="mt-6 text-center text-xs text-faint">
-            Drivers and operators are provisioned by the control room — pick
+            Drivers and operators are provisioned by the control room - pick
             rider sign-up.
           </p>
         </motion.div>

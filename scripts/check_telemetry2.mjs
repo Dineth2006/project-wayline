@@ -45,7 +45,7 @@ const read = async () => {
 
 const show = async (label) => {
   const v = await read();
-  if (v === null) { console.log(`${label}: bus_01/telemetry does NOT exist — device has written nothing`); return; }
+  if (v === null) { console.log(`${label}: bus_01/telemetry does NOT exist - device has written nothing`); return; }
   const age = v.ts ? Math.round((Date.now() - Number(v.ts)) / 1000) : "?";
   console.log(`${label}: ${JSON.stringify(v)}  | ts age: ${age}s`);
 };

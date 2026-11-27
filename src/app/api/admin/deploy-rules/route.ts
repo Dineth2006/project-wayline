@@ -5,7 +5,7 @@ import { adminDb, requireOperator } from "@/lib/firebaseAdmin";
 
 /**
  * Operator-only maintenance endpoint: deploys the repo's database.rules.json
- * to the live Realtime Database (admin.database().setRules — the path that
+ * to the live Realtime Database (admin.database().setRules - the path that
  * actually accepts RTDB JSON rules).
  */
 export async function POST(req: Request) {

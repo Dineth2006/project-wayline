@@ -1,5 +1,5 @@
 // One-off test: fire clearCrash=true and watch whether the physical device
-// clears telemetry.crash — and whether it re-triggers within seconds.
+// clears telemetry.crash - and whether it re-triggers within seconds.
 import fs from "fs";
 const env = {};
 for (const line of fs.readFileSync(".env.local", "utf8").split("\n")) {

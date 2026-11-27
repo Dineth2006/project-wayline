@@ -16,7 +16,7 @@ const dbUrl = env.NEXT_PUBLIC_FIREBASE_DATABASE_URL.replace(/\/$/, "");
 const BUS_ID = process.argv[2] ?? "bus_02";
 const LOCATION_ONLY = process.argv.includes("--location-only");
 // location-only: this process only owns location+speed (a real device/tracker
-// owns the rest) — written via PATCH so fields never clobber each other
+// owns the rest) - written via PATCH so fields never clobber each other
 const TICK_MS = 250;
 const SPEED_CM_S = 40;                 // matches web Telemetry.speed units
 const STEP_M = SPEED_CM_S / 100 / (1000 / TICK_MS); // metres per tick
@@ -44,15 +44,15 @@ let stopped = false, crash = false;
 
 const put = async (payload) => {
   await fetch(dbUrl + `/buses/${BUS_ID}/telemetry.json?auth=` + j.idToken, {
-    method: "PATCH", // merge — never wipe fields owned by the real device
+    method: "PATCH", // merge - never wipe fields owned by the real device
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 };
 
-console.log("running — Ctrl+C to stop");
+console.log("running - Ctrl+C to stop");
 while (true) {
-  // commands — full mode only. In location-only mode the PHYSICAL device owns
+  // commands - full mode only. In location-only mode the PHYSICAL device owns
   // the command node; this process must never delete it (or Clear-crash dies).
   if (LOCATION_ONLY) {
     const tel = await (await fetch(dbUrl + `/buses/${BUS_ID}/telemetry.json?auth=` + j.idToken)).json();

@@ -29,7 +29,7 @@ const roles = [
   {
     icon: Bus,
     title: "Drivers",
-    body: "The next stop, a live ETA, and your trip report — plus the on-board drive controls when you need them.",
+    body: "The next stop, a live ETA, and your trip report - plus the on-board drive controls when you need them.",
   },
   {
     icon: Gauge,
@@ -82,7 +82,7 @@ export default function Home() {
             className="inline-flex items-center gap-2 rounded-full bg-soft px-3.5 py-1.5 text-xs font-semibold text-primary-dark"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-dot" />
-            Live network — {NETWORK.buses} buses · {NETWORK.routes} route
+            Live network - {NETWORK.buses} buses · {NETWORK.routes} route
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
@@ -176,7 +176,7 @@ export default function Home() {
           <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 shadow-card backdrop-blur">
             <Radio className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold">{NETWORK.routeName}</span>
-            <span className="text-xs text-muted">— network preview</span>
+            <span className="text-xs text-muted">- network preview</span>
           </div>
         </motion.div>
       </section>
@@ -189,7 +189,7 @@ export default function Home() {
               One network, three workspaces.
             </h2>
             <p className="mt-3 text-muted">
-              Wayline gives every person on the route the same live picture —
+              Wayline gives every person on the route the same live picture,
               shaped for how they use it.
             </p>
           </motion.div>

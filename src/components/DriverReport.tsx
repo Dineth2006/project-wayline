@@ -26,7 +26,7 @@ function Pill({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   );
 }
 
-/** Driver performance summary — stat cards, safety gauge, ratings, incident log. */
+/** Driver performance summary - stat cards, safety gauge, ratings, incident log. */
 export function DriverReport({ stats: s }: { stats: DriverStats }) {
   const scoreColor = s.safetyScore >= 75 ? "#0e7a5b" : s.safetyScore >= 50 ? "#d97706" : "#dc2626";
 
@@ -126,9 +126,9 @@ export function DriverReport({ stats: s }: { stats: DriverStats }) {
 
         {/* incident log */}
         <Card className="p-5 sm:p-6">
-          <SectionTitle title="Incident log" hint="Newest first — from the bus event stream" />
+          <SectionTitle title="Incident log" hint="Newest first - from the bus event stream" />
           {s.incidents.length === 0 ? (
-            <p className="mt-4 text-sm text-emerald-700">No recorded incidents — clean record.</p>
+            <p className="mt-4 text-sm text-emerald-700">No recorded incidents - clean record.</p>
           ) : (
             <ul className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-1">
               {s.incidents.map((e, i) => (

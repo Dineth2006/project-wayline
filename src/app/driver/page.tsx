@@ -103,7 +103,7 @@ function TripBanner({ busId }: { busId?: string }) {
                 Speed
               </p>
               <p className="text-2xl font-bold tabular-nums">
-                {t?.speed != null ? Math.round(t.speed) : "—"}
+                {t?.speed != null ? Math.round(t.speed) : "-"}
                 <span className="ml-1 text-xs font-medium text-white/60">cm/s</span>
               </p>
             </div>
@@ -135,7 +135,7 @@ function TripBanner({ busId }: { busId?: string }) {
           >
             <Siren className="h-5 w-5 shrink-0" />
             <p className="flex-1 text-sm font-semibold">
-              Collision detected — controls are locked. An operator or the device
+              Collision detected - controls are locked. An operator or the device
               must clear the crash state.
             </p>
           </motion.div>
@@ -189,20 +189,20 @@ function TripStats({ busId, routeId }: { busId: string; routeId: string }) {
       <div className="grid grid-cols-3 gap-3">
         <StatCard
           label="Next stop"
-          value={next?.name ?? "—"}
+          value={next?.name ?? "-"}
           sub={next ? `in ${formatDistance(next.dist)}` : "no route set"}
           icon={<Navigation className="h-4 w-4" />}
         />
         <StatCard
           label="ETA"
-          value={eta != null ? `${Math.round(eta)}s` : "—"}
+          value={eta != null ? `${Math.round(eta)}s` : "-"}
           sub={next && t?.speed ? `at ${Math.round(t.speed)} cm/s` : "waiting for speed"}
           icon={<Gauge className="h-4 w-4" />}
           delay={0.05}
         />
         <StatCard
           label="Route"
-          value={route?.name ?? "—"}
+          value={route?.name ?? "-"}
           sub={route ? `${route.points.length} waypoints` : "assign a route"}
           icon={<RouteIcon className="h-4 w-4" />}
           delay={0.1}
@@ -210,7 +210,7 @@ function TripStats({ busId, routeId }: { busId: string; routeId: string }) {
       </div>
       <Card>
         <div className="p-4 sm:p-5">
-          <SectionTitle title="Position" hint="Live 2 m arena view — the marker is your bus." />
+          <SectionTitle title="Position" hint="Live 2 m arena view - the marker is your bus." />
         </div>
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           <LiveMap
@@ -279,7 +279,7 @@ function DrivePad({ busId, locked, offline }: { busId: string; locked: boolean; 
       <div className="p-4 sm:p-5">
         <SectionTitle
           title="Drive controls"
-          hint="Press and hold to send — the bus keeps moving while you hold."
+          hint="Press and hold to send - the bus keeps moving while you hold."
           action={
             offline ? (
               <Pill tone="gray">Bus offline</Pill>

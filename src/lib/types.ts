@@ -37,7 +37,7 @@ export interface Bus {
 }
 
 export interface Route {
-  /** RTDB key — set client-side when reading */
+  /** RTDB key - set client-side when reading */
   id: string;
   name: string;
   tolerance: number;
@@ -55,7 +55,7 @@ export interface Alert {
 }
 
 export interface Geofence {
-  /** RTDB push key — set client-side when reading */
+  /** RTDB push key - set client-side when reading */
   id: string;
   x: number;
   y: number;

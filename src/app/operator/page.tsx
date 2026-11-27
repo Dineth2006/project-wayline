@@ -102,12 +102,12 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
     try {
       const snap = await get(ref(db, "settings"));
       await set(ref(db, "settings"), { ...(snap.val() ?? {}), ...patch });
-      setOk("Saved — every connected device switches automatically.");
+      setOk("Saved - every connected device switches automatically.");
     } catch (e) {
       setErr(
         e instanceof Error && e.message.includes("permission_denied")
           ? "Applied for this browser only. Your account is not allowed to change global settings (operator role required)."
-          : "Applied for this browser only. Could not sync to other devices — check your Firebase connection / rules."
+          : "Applied for this browser only. Could not sync to other devices - check your Firebase connection / rules."
       );
     } finally {
       setBusy(false);
@@ -124,7 +124,7 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
     try {
       const dataUrl = await processArenaImage(file);
       await set(ref(db, "arenaMap"), dataUrl);
-      setOk("Background saved — every client's arena map updated.");
+      setOk("Background saved - every client's arena map updated.");
     } catch (err) {
       setErr(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -138,7 +138,7 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
     setOk("");
     try {
       await set(ref(db, "arenaMap"), null);
-      setOk("Background removed — arenas show the default city.");
+      setOk("Background removed - arenas show the default city.");
     } catch {
       setErr("Could not remove the background.");
     } finally {
@@ -162,7 +162,7 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
             className={`rounded-xl border p-4 text-left transition ${mode === "arena" ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-300" : "border-slate-200 bg-white hover:border-emerald-300"}`}
           >
             <p className="text-sm font-bold text-slate-800">Arena (custom map)</p>
-            <p className="mt-1 text-xs text-slate-500">2D map in metres — the 2 m arena layout. Default.</p>
+            <p className="mt-1 text-xs text-slate-500">2D map in metres - the 2 m arena layout. Default.</p>
           </button>
           <button
             onClick={() => save({ mapMode: "google" })}
@@ -204,7 +204,7 @@ function SettingsPanel({ settings }: { settings: ReturnType<typeof useSettings> 
               </button>
             )}
             <p className="text-xs text-slate-400">
-              Any photo works — it is cropped to 1:1 and shrunk automatically. Only operators can change it.
+              Any photo works - it is cropped to 1:1 and shrunk automatically. Only operators can change it.
             </p>
           </div>
         </div>
@@ -315,7 +315,7 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
         <div className="p-4 sm:p-5">
           <SectionTitle
             title="Register bus"
-            hint="Adds a bus to the fleet — firmware/simulator can then report against it."
+            hint="Adds a bus to the fleet - firmware/simulator can then report against it."
           />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <input className={fieldCls} placeholder="Bus ID (e.g. BUS-03)" value={reg.id} onChange={(e) => setReg({ ...reg, id: e.target.value })} />
@@ -376,7 +376,7 @@ function Fleet({ buses, routes }: { buses: Bus[]; routes: Route[] }) {
           {buses.length === 0 && (
             <Card>
               <p className="p-5 text-sm text-muted">
-                No buses registered yet — add one with the form above.
+                No buses registered yet - add one with the form above.
               </p>
             </Card>
           )}
@@ -470,17 +470,17 @@ function BusCard({ bus, routes, delay, focused, onRemove, removing }: { bus: Bus
       )}
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-canvas p-2">
-          <p className="text-lg font-semibold tabular-nums">{t?.speed != null ? Math.round(t.speed) : "—"}</p>
+          <p className="text-lg font-semibold tabular-nums">{t?.speed != null ? Math.round(t.speed) : "-"}</p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-faint">cm/s</p>
         </div>
         <div className="rounded-xl bg-canvas p-2">
           <p className="text-lg font-semibold tabular-nums">
-            {t?.location ? `${t.location.x.toFixed(2)}, ${t.location.y.toFixed(2)}` : "—"}
+            {t?.location ? `${t.location.x.toFixed(2)}, ${t.location.y.toFixed(2)}` : "-"}
           </p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-faint">x · y</p>
         </div>
         <div className="rounded-xl bg-canvas p-2">
-          <p className="text-lg font-semibold tabular-nums">{route?.name ?? "—"}</p>
+          <p className="text-lg font-semibold tabular-nums">{route?.name ?? "-"}</p>
           <p className="text-[10px] font-medium uppercase tracking-wider text-faint">route</p>
         </div>
       </div>

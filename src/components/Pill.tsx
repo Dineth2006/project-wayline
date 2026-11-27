@@ -9,7 +9,7 @@ const tones: Record<Tone, string> = {
   gray: "bg-line/50 text-muted",
 };
 
-/** Wayline status pill — optional pulsing dot on the left. */
+/** Wayline status pill - optional pulsing dot on the left. */
 export function Pill({
   tone = "green",
   dot,

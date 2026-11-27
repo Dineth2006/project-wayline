@@ -89,7 +89,7 @@ export function formatClock(ts: number) {
 }
 
 export function formatDistance(m: number) {
-  if (!isFinite(m)) return "—";
+  if (!isFinite(m)) return "-";
   if (m < 1) return `${Math.round(m * 100)} cm`;
   return `${m.toFixed(1)} m`;
 }

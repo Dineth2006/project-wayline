@@ -86,7 +86,7 @@ export function DriverSummary({
         <p className="text-sm font-semibold">Recent events</p>
         {list.length === 0 && (
           <p className="mt-2 text-sm text-muted">
-            No events recorded yet — drive the bus to generate some.
+            No events recorded yet - drive the bus to generate some.
           </p>
         )}
         {list.length > 0 && (

@@ -60,7 +60,7 @@ interface Props {
   onEditPointClick?: (i: number) => void;
   /** drag a draft point to a new position (index, new coords) */
   onEditPointMove?: (i: number, p: Pt) => void;
-  /** move mode: ignore map clicks — drag a numbered point only */
+  /** move mode: ignore map clicks - drag a numbered point only */
   moveMode?: boolean;
   demo?: boolean; // landing page: decorative route with a looping bus
   className?: string;

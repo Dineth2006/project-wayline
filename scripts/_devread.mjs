@@ -25,7 +25,7 @@ console.log("device sign-in OK");
 const read = async (label) => {
   const q = await fetch(dbUrl + "/buses/bus_01/telemetry.json?auth=" + j.idToken);
   const v = await q.json();
-  if (v === null) { console.log(label + ": telemetry node does NOT exist — device has written nothing"); return; }
+  if (v === null) { console.log(label + ": telemetry node does NOT exist - device has written nothing"); return; }
   const age = v.ts ? Math.round((Date.now() - Number(v.ts)) / 1000) : "?";
   console.log(label + ": " + JSON.stringify(v) + "  | ts age: " + age + "s");
 };
